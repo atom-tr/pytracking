@@ -7,3 +7,5 @@
 .tox/
 dist/
 cache/
+docs/_build/
+venv/
