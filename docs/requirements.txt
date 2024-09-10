@@ -1,2 +1,4 @@
 sphinx
 myst-parser
+sphinx_rtd_theme>=0.5.0
+django

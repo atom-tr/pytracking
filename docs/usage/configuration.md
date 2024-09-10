@@ -1,7 +1,0 @@
-# Configuration
-
-## Django
-
-## Flask
-
-## FastAPI
