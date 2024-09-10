@@ -1,4 +1,6 @@
 sphinx
 myst-parser
 sphinx_rtd_theme>=0.5.0
+# install pytracking from pip for autodoc
 django
+pytracking==0.2.3
