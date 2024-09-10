@@ -158,3 +158,65 @@ Encrypting your data slightly increases the length of the generated URL.
     tracking_result = pytracking.get_open_tracking_result(
         full_url, base_click_tracking_url="https://trackingdomain.com/path/",
         encryption_bytestring_key=key)
+
+Notifying Webhooks
+------------------
+
+You can send a POST request to a webhook with the tracking result. The webhook
+feature just packages the tracking result as a json string in the POST body. It
+also sets the content encoding to ``application/json``.
+
+To use the webhook feature, you must install pytracking with
+``pytracking[webhook]``.
+
+
+::
+
+    import pytracking
+    from pytracking.webhook import send_webhook
+
+    # Assumes that the webhook url is encoded in the url.
+    full_url = "https://trackingdomain.com/path/e30203jhd9239754jh21387293jhf989sda="
+    tracking_result = pytracking.get_open_tracking_result(
+        full_url, base_click_tracking_url="https://trackingdomain.com/path/")
+
+    # Will send a POST request with the following json str body:
+    #  {
+    #    "is_open_tracking": False,
+    #    "is_click_tracking": True,
+    #    "metadata": {...},
+    #    "request_data": None,
+    #    "tracked_url": "http://...",
+    #    "timestamp": 1389177318
+    #  }
+    send_webhook(tracking_result)
+
+
+
+Modifying HTML emails to add tracking links
+-------------------------------------------
+
+If you have an HTML email, pytracking can update all links with tracking links
+and it can also add a transparent tracking pixel at the end of your email.
+
+To use the HTML feature, you must install pytracking with ``pytracking[html]``,
+which uses the `lxml library <http://lxml.de/>`_.
+
+::
+
+    import pytracking
+    from pytracking.html import adapt_html
+
+    html_email_text = "..."
+    new_html_email_text = adapt_html(
+        html_email_text, extra_metadata={"customer_id": 1},
+        click_tracking=True, open_tracking=True)
+
+
+Testing pytracking
+------------------
+
+pytracking uses `tox <https://tox.readthedocs.io/en/latest/>`_ and `py.test
+<http://docs.pytest.org/en/latest/>`_. If you have tox installed, just run
+``tox`` and all possible configurations of pytracking will be tested on Python
+3.6-3.9.
