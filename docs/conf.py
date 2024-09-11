@@ -9,8 +9,15 @@
 project = 'pytracking'
 copyright = '2024, Power Go'
 author = 'Power Go'
-release = '0.2.3'
-version = release
+
+import re
+with open('../setup.py', 'r') as f:
+    setup_content = f.read()
+    version_match = re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", setup_content)
+    if version_match:
+        version = release = version_match.group(1)
+    else:
+        version = release = 'unknown'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

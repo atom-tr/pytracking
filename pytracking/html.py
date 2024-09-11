@@ -3,6 +3,9 @@ from lxml import html
 from pytracking.tracking import (
     get_configuration, get_open_tracking_url, get_click_tracking_url)
 
+from typing import Dict, Optional
+from pytracking.tracking import Configuration
+
 
 DEFAULT_ATTRIBUTES = {
     "border": "0",
@@ -14,41 +17,40 @@ DEFAULT_ATTRIBUTES = {
 DOCTYPE = "<!DOCTYPE html>"
 
 
-def adapt_html(
-        html_text, extra_metadata, click_tracking=True, open_tracking=True,
-        configuration=None, **kwargs):
-    """Changes an HTML string by replacing links (<a href...>) with tracking
-    links and by adding a 1x1 transparent pixel just before the closing body
-    tag.
+def adapt_html(html_text: str, extra_metadata: dict, click_tracking: bool = True, open_tracking: bool = True, configuration: Configuration = None, **kwargs) -> str:
+    """
+    Modify HTML by adding tracking links and a tracking pixel.
 
-    :param html_text: The HTML to change (unicode or bytestring).
-    :param extra_metadata: A dict that can be json-encoded and that will
-        be encoded in the tracking link.
-    :param click_tracking: If links (<a href...>) must be changed.
-    :param open_tracking: If a transparent pixel must be added before the
-        closing body tag.
-    :param configuration: An optional Configuration instance.
-    :param kwargs: Optional configuration parameters. If provided with a
-        Configuration instance, the kwargs parameters will override the
-        Configuration parameters.
+    Args:
+        html_text (str): The HTML content to modify.
+        extra_metadata (dict): Additional data to include in tracking links.
+        click_tracking (bool): If True, replace links with tracking links.
+        open_tracking (bool): If True, add a tracking pixel.
+        configuration (Configuration): Custom configuration settings.
+        **kwargs: Additional configuration parameters.
+
+    Returns:
+        str: Modified HTML content with tracking elements.
+
+    This function processes the input HTML to add tracking capabilities:
+    
+    * Replaces regular links with click-tracking links if click_tracking is True.
+    * Adds a 1x1 transparent pixel for open tracking if open_tracking is True.
+    * Uses the provided configuration or creates a new one from kwargs.
     """
     configuration = get_configuration(configuration, kwargs)
-
     tree = html.fromstring(html_text)
-
+    
     if click_tracking:
         _replace_links(tree, extra_metadata, configuration)
-
+    
     if open_tracking:
         _add_tracking_pixel(tree, extra_metadata, configuration)
-
-    new_html_text = html.tostring(
-        tree, include_meta_content_type=True, doctype=DOCTYPE)
-
-    return new_html_text.decode("utf-8")
+    
+    return html.tostring(tree, include_meta_content_type=True, doctype=DOCTYPE).decode("utf-8")
 
 
-def _replace_links(tree, extra_metadata, configuration):
+def _replace_links(tree: html.Element, extra_metadata: Dict, configuration: Configuration):
     """
     Replace all links in the HTML tree with tracking links.
 
@@ -63,7 +65,7 @@ def _replace_links(tree, extra_metadata, configuration):
             element.attrib["href"] = new_link
 
 
-def _add_tracking_pixel(tree, extra_metadata, configuration):
+def _add_tracking_pixel(tree: html.Element, extra_metadata: Dict, configuration: Configuration):
     """
     Add a tracking pixel to the HTML tree.
 
@@ -84,7 +86,7 @@ def _add_tracking_pixel(tree, extra_metadata, configuration):
 
 _valid_scheme = ["http://", "https://", "//"]
 
-def _valid_link(link, configuration=None):
+def _valid_link(link: str, configuration: Configuration = None) -> bool:
     """
     Check if a link is valid for click tracking.
     """

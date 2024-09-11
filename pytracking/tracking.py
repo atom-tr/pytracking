@@ -1,6 +1,7 @@
 import base64
 from collections import namedtuple
 from copy import deepcopy
+from typing import Dict
 import json
 import time
 from urllib.parse import urljoin
@@ -23,12 +24,12 @@ DEFAULT_TIMEOUT_SECONDS = 5
 class Configuration(object):
 
     def __init__(
-            self, webhook_url=None,
-            webhook_timeout_seconds=DEFAULT_TIMEOUT_SECONDS,
-            include_webhook_url=False, base_open_tracking_url=None,
-            base_click_tracking_url=None, default_metadata=None,
-            include_default_metadata=False, encryption_bytestring_key=None,
-            encoding="utf-8", append_slash=False, pixel_position='top', **kwargs):
+            self, webhook_url: str = None,
+            webhook_timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+            include_webhook_url: bool = False, base_open_tracking_url: str = None,
+            base_click_tracking_url: str = None, default_metadata: Dict = None,
+            include_default_metadata: bool = False, encryption_bytestring_key: str = None,
+            encoding: str = "utf-8", append_slash: bool = False, pixel_position: str = 'top', **kwargs):
         """
 
         :param webhook_url: The webhook to notify when a click or open is
@@ -150,7 +151,7 @@ class Configuration(object):
 
         return data
 
-    def get_url_encoded_data_str(self, data_to_embed):
+    def get_url_encoded_data_str(self, data_to_embed: Dict):
         """
         Encode and optionally encrypt the data to be embedded in the tracking URL.
 
@@ -174,7 +175,7 @@ class Configuration(object):
 
         return data_str
 
-    def get_open_tracking_url_from_data_str(self, data_str):
+    def get_open_tracking_url_from_data_str(self, data_str: str):
         """
         Construct the full open tracking URL from the encoded data string.
 
@@ -189,7 +190,7 @@ class Configuration(object):
             temp_url += "/"
         return temp_url
 
-    def get_click_tracking_url_from_data_str(self, data_str):
+    def get_click_tracking_url_from_data_str(self, data_str: str):
         """
         Construct the full click tracking URL from the encoded data string.
 
@@ -204,7 +205,7 @@ class Configuration(object):
             temp_url += "/"
         return temp_url
 
-    def get_open_tracking_url(self, extra_metadata):
+    def get_open_tracking_url(self, extra_metadata: Dict):
         """
         Generate the full open tracking URL.
 
@@ -220,7 +221,7 @@ class Configuration(object):
         data_str = self.get_url_encoded_data_str(data_to_embed)
         return self.get_open_tracking_url_from_data_str(data_str)
 
-    def get_click_tracking_url(self, url_to_track, extra_metadata):
+    def get_click_tracking_url(self, url_to_track: str, extra_metadata: Dict):
         """
         Generate the full click tracking URL.
 
@@ -239,7 +240,7 @@ class Configuration(object):
         return self.get_click_tracking_url_from_data_str(data_str)
 
     def get_tracking_result(
-            self, encoded_url_path, request_data, is_open):
+            self, encoded_url_path: str, request_data: Dict, is_open: bool):
         """
         Parse the encoded tracking URL and return the tracking result.
 
@@ -289,7 +290,7 @@ class Configuration(object):
             timestamp=timestamp,
         )
 
-    def get_click_tracking_url_path(self, url):
+    def get_click_tracking_url_path(self, url: str):
         """
         Extract the encoded click tracking URL path from the full URL.
 
@@ -302,7 +303,7 @@ class Configuration(object):
         """
         return url[len(self.base_click_tracking_url):]
 
-    def get_open_tracking_url_path(self, url):
+    def get_open_tracking_url_path(self, url: str):
         """
         Extract the encoded open tracking URL path from the full URL.
 
@@ -377,7 +378,7 @@ def get_configuration(configuration, kwargs):
     return configuration
 
 
-def get_open_tracking_url(metadata=None, configuration=None, **kwargs):
+def get_open_tracking_url(metadata: Dict = None, configuration: Configuration = None, **kwargs) -> str:
     """Returns a tracking URL encoding the metadata and other information
     specified in the configuration or kwargs.
 
@@ -401,7 +402,7 @@ def get_open_tracking_pixel():
 
 
 def get_click_tracking_url(
-        url_to_track, metadata=None, configuration=None, **kwargs):
+        url_to_track: str, metadata: Dict = None, configuration: Configuration = None, **kwargs) -> str:
     """Returns a tracking URL encoding the link to track, the provided
     metadata, and other information specified in the configuration or kwargs.
 
@@ -419,7 +420,7 @@ def get_click_tracking_url(
 
 
 def get_click_tracking_result(
-        encoded_url_path, request_data=None, configuration=None, **kwargs):
+        encoded_url_path: str, request_data: Dict = None, configuration: Configuration = None, **kwargs) -> TrackingResult:
     """Get a TrackingResult instance from an encoded click tracking link.
 
     :param encoded_url_path: The part of the URL that is encoded and contains
@@ -444,7 +445,7 @@ def get_click_tracking_result(
 
 
 def get_click_tracking_url_path(
-        url, configuration=None, **kwargs):
+        url: str, configuration: Configuration = None, **kwargs) -> str:
     """Get a part of a URL that contains the encoded click tracking
     information. This is the part that needs to be supplied to
     get_click_tracking_result.
@@ -460,7 +461,7 @@ def get_click_tracking_url_path(
 
 
 def get_open_tracking_result(
-        encoded_url_path, request_data=None, configuration=None, **kwargs):
+        encoded_url_path: str, request_data: Dict = None, configuration: Configuration = None, **kwargs) -> TrackingResult:
     """Get a TrackingResult instance from an encoded open tracking link.
 
     :param encoded_url_path: The part of the URL that is encoded and contains
@@ -485,7 +486,7 @@ def get_open_tracking_result(
 
 
 def get_open_tracking_url_path(
-        url, configuration=None, **kwargs):
+        url: str, configuration: Configuration = None, **kwargs) -> str:
     """Get a part of a URL that contains the encoded open tracking
     information. This is the part that needs to be supplied to
     get_open_tracking_result.

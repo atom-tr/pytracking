@@ -1,9 +1,11 @@
+from typing import Dict
 from django.conf import settings
 from django.http import (
-    HttpResponseRedirect, Http404, HttpResponse)
+    HttpResponseRedirect, Http404, HttpResponse, HttpRequest)
 from django.views.generic import View
 from ipware import get_client_ip
 from pytracking.tracking import (
+    TrackingResult, Configuration,
     get_configuration, TRACKING_PIXEL, PNG_MIME_TYPE)
 
 
@@ -13,7 +15,7 @@ class TrackingView(View):
     Subclasses should override notify_* methods.
     """
 
-    def notify_tracking_event(self, tracking_result):
+    def notify_tracking_event(self, tracking_result: TrackingResult):
         """Called once the tracking link has been decoded, and before
         responding with a redirect or a tracking pixel.
 
@@ -21,7 +23,7 @@ class TrackingView(View):
         """
         pass
 
-    def notify_decoding_error(self, exception, request):
+    def notify_decoding_error(self, exception: Exception, request: HttpRequest):
         """Called when a decoding error occurs, and before
         responding with a 404.
 
@@ -30,7 +32,7 @@ class TrackingView(View):
         """
         pass
 
-    def get_configuration(self):
+    def get_configuration(self) -> Configuration:
         """Returns a Configuration instance built from
         settings.PYTRACKING_CONFIGURATION.
 
@@ -54,7 +56,7 @@ class ClickTrackingView(TrackingView):
     If no tracking url is present in the decoded URL, a 404 is returned.
     """
 
-    def get(self, request, path):
+    def get(self, request: HttpRequest, path: str):
         configuration = self.get_configuration()
 
         try:
@@ -84,7 +86,7 @@ class OpenTrackingView(TrackingView):
     returned.
     """
 
-    def get(self, request, path):
+    def get(self, request: HttpRequest, path: str):
         configuration = self.get_configuration()
 
         try:
@@ -99,7 +101,7 @@ class OpenTrackingView(TrackingView):
         return HttpResponse(TRACKING_PIXEL, content_type=PNG_MIME_TYPE)
 
 
-def get_request_data(request):
+def get_request_data(request: HttpRequest) -> Dict[str, str]:
     """Retrieves the user agent and the ip of the client from the Django
     request.
 
@@ -122,7 +124,7 @@ def get_configuration_from_settings(settings_name="PYTRACKING_CONFIGURATION"):
     return get_configuration(None, kwargs)
 
 
-def get_tracking_result(request, path, is_open, configuration=None, **kwargs):
+def get_tracking_result(request: HttpRequest, path: str, is_open: bool, configuration: Configuration = None, **kwargs) -> TrackingResult:
     """Builds a tracking result from a Django request.
 
     :param request: A Django request
