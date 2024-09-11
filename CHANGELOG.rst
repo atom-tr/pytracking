@@ -1,6 +1,12 @@
 Changelog - pytracking
 ======================
 
+0.2.4 - September 19th 2024
+--------------------------
+
+- Added pixel_position configuration parameter to specify where to insert the tracking pixel in the HTML
+- Do not replace href in <a> tags that are already tracking URLs
+
 0.2.3 - November 24th 2022
 --------------------------
 
