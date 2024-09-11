@@ -49,6 +49,13 @@ def adapt_html(
 
 
 def _replace_links(tree, extra_metadata, configuration):
+    """
+    Replace all links in the HTML tree with tracking links.
+
+    :param tree: The HTML tree to modify
+    :param extra_metadata: Additional metadata for the tracking URL
+    :param configuration: Configuration object containing settings
+    """
     for (element, attribute, link, pos) in tree.iterlinks():
         if element.tag == "a" and attribute == "href" and _valid_link(link):
             new_link = get_click_tracking_url(
@@ -57,9 +64,23 @@ def _replace_links(tree, extra_metadata, configuration):
 
 
 def _add_tracking_pixel(tree, extra_metadata, configuration):
+    """
+    Add a tracking pixel to the HTML tree.
+
+    :param tree: The HTML tree to modify
+    :param extra_metadata: Additional metadata for the tracking URL
+    :param configuration: Configuration object containing settings
+    """
     url = get_open_tracking_url(extra_metadata, configuration)
     pixel = html.Element("img", {"src": url})
-    tree.body.append(pixel)
+    
+    if hasattr(tree, 'body'):
+        if configuration.pixel_position == 'top':
+            tree.body.insert(0, pixel)
+        else:
+            tree.body.append(pixel)
+    else:
+        tree.insert(0, pixel)
 
 
 def _valid_link(link):

@@ -28,7 +28,7 @@ class Configuration(object):
             include_webhook_url=False, base_open_tracking_url=None,
             base_click_tracking_url=None, default_metadata=None,
             include_default_metadata=False, encryption_bytestring_key=None,
-            encoding="utf-8", append_slash=False, **kwargs):
+            encoding="utf-8", append_slash=False, pixel_position='top', **kwargs):
         """
 
         :param webhook_url: The webhook to notify when a click or open is
@@ -48,6 +48,8 @@ class Configuration(object):
         :param encryption_bytestring_key: The encryption key given by Fernet.
         :param encoding: The encoding to use to encode and decode the tracking
             link. Default to utf-8.
+        :param pixel_position: The position of the tracking pixel in the HTML.
+            Can be 'top' or 'bottom'. Default is 'top'.
         :param kwargs: Other args
         """
         self.webhook_url = webhook_url
@@ -61,7 +63,8 @@ class Configuration(object):
         self.encoding = encoding
         self.kwargs = kwargs
         self.encryption_key = None
-        self.append_slash = False
+        self.append_slash = append_slash
+        self.pixel_position = pixel_position
 
         self.cache_encryption_key()
 
@@ -83,8 +86,13 @@ class Configuration(object):
 
     def merge_with_kwargs(self, kwargs):
         """
+        Merge the current configuration with provided parameters.
 
-        :param kwargs:
+        This method creates a copy of the current configuration and updates it with values
+        from kwargs for existing attributes. It then updates the encryption key if necessary.
+
+        :param kwargs: A dictionary containing configuration parameters to update.
+        :return: A new Configuration object with the updated values.
         """
         new_configuration = deepcopy(self)
         for key, value in kwargs.items():
@@ -97,7 +105,13 @@ class Configuration(object):
         return new_configuration
 
     def cache_encryption_key(self):
-        """TODO
+        """
+        Cache the encryption key.
+
+        This method creates a Fernet object from the encryption bytestring key if provided.
+        Otherwise, it sets the encryption key to None.
+
+        The encryption key is used to encrypt and decrypt data in tracking URLs.
         """
         if self.encryption_bytestring_key:
             self.encryption_key = Fernet(self.encryption_bytestring_key)
@@ -105,10 +119,18 @@ class Configuration(object):
             self.encryption_key = None
 
     def get_data_to_embed(self, url_to_track, extra_metadata):
-        """TODO
+        """
+        Prepare data to be embedded in the tracking URL.
 
-        :param url_to_track:
-        :param meta_data:
+        This method constructs a dictionary containing the URL to track (if provided),
+        metadata (including default and extra metadata), and webhook URL (if configured).
+
+        :param url_to_track: The URL to be tracked (optional).
+        :type url_to_track: str or None
+        :param extra_metadata: Additional metadata to be included.
+        :type extra_metadata: dict or None
+        :return: A dictionary containing the data to be embedded in the tracking URL.
+        :rtype: dict
         """
         data = {}
         if url_to_track:
@@ -129,7 +151,17 @@ class Configuration(object):
         return data
 
     def get_url_encoded_data_str(self, data_to_embed):
-        """TODO
+        """
+        Encode and optionally encrypt the data to be embedded in the tracking URL.
+
+        This method takes the data to be embedded, converts it to a JSON string,
+        and then either encrypts it (if an encryption key is available) or
+        encodes it using URL-safe Base64 encoding.
+
+        :param data_to_embed: The data to be encoded and embedded in the URL.
+        :type data_to_embed: dict
+        :return: The encoded (and possibly encrypted) data string.
+        :rtype: str
         """
         json_byte_str = json.dumps(data_to_embed).encode(self.encoding)
 
@@ -143,7 +175,14 @@ class Configuration(object):
         return data_str
 
     def get_open_tracking_url_from_data_str(self, data_str):
-        """TODO
+        """
+        Construct the full open tracking URL from the encoded data string.
+
+        This method constructs the full URL for open tracking by appending the encoded data string
+        to the base open tracking URL. It also appends a slash if configured.
+
+        :param data_str: The encoded data string to be appended to the base URL.
+        :type data_str: str
         """
         temp_url = urljoin(self.base_open_tracking_url, data_str)
         if self.append_slash:
@@ -151,7 +190,14 @@ class Configuration(object):
         return temp_url
 
     def get_click_tracking_url_from_data_str(self, data_str):
-        """TODO
+        """
+        Construct the full click tracking URL from the encoded data string.
+
+        This method constructs the full URL for click tracking by appending the encoded data string
+        to the base click tracking URL. It also appends a slash if configured.
+
+        :param data_str: The encoded data string to be appended to the base URL.
+        :type data_str: str
         """
         temp_url = urljoin(self.base_click_tracking_url, data_str)
         if self.append_slash:
@@ -159,12 +205,34 @@ class Configuration(object):
         return temp_url
 
     def get_open_tracking_url(self, extra_metadata):
+        """
+        Generate the full open tracking URL.
+
+        This method constructs the full URL for open tracking by embedding the provided metadata
+        and other configuration settings into the URL.
+
+        :param extra_metadata: Additional metadata to be included in the URL.
+        :type extra_metadata: dict or None
+        :return: The full open tracking URL.
+        :rtype: str
+        """
         data_to_embed = self.get_data_to_embed(None, extra_metadata)
         data_str = self.get_url_encoded_data_str(data_to_embed)
         return self.get_open_tracking_url_from_data_str(data_str)
 
     def get_click_tracking_url(self, url_to_track, extra_metadata):
-        """TODO
+        """
+        Generate the full click tracking URL.
+
+        This method constructs the full URL for click tracking by embedding the provided URL to track,
+        metadata, and other configuration settings into the URL.
+
+        :param url_to_track: The URL to be tracked.
+        :type url_to_track: str
+        :param extra_metadata: Additional metadata to be included in the URL.
+        :type extra_metadata: dict or None
+        :return: The full click tracking URL.
+        :rtype: str
         """
         data_to_embed = self.get_data_to_embed(url_to_track, extra_metadata)
         data_str = self.get_url_encoded_data_str(data_to_embed)
@@ -172,7 +240,20 @@ class Configuration(object):
 
     def get_tracking_result(
             self, encoded_url_path, request_data, is_open):
-        """TODO
+        """
+        Parse the encoded tracking URL and return the tracking result.
+
+        This method decodes the provided encoded URL path, decrypts it if an encryption key is available,
+        and then extracts the relevant tracking information such as metadata, webhook URL, and tracked URL.
+
+        :param encoded_url_path: The encoded URL path containing tracking information.
+        :type encoded_url_path: str
+        :param request_data: The request data (dict) associated with the client that made the request to the tracking link.
+        :type request_data: dict or None
+        :param is_open: Indicates if the URL is for open tracking.
+        :type is_open: bool
+        :return: The tracking result containing the parsed information.
+        :rtype: TrackingResult
         """
         timestamp = int(time.time())
         if encoded_url_path.startswith("/"):
@@ -209,12 +290,28 @@ class Configuration(object):
         )
 
     def get_click_tracking_url_path(self, url):
-        """TODO
+        """
+        Extract the encoded click tracking URL path from the full URL.
+
+        This method extracts the portion of the URL that contains the encoded click tracking information
+        by removing the base click tracking URL from the full URL.
+
+        :param url: The full URL containing the encoded click tracking information.
+        :type url: str
+        :return: The encoded click tracking URL path.
         """
         return url[len(self.base_click_tracking_url):]
 
     def get_open_tracking_url_path(self, url):
-        """TODO
+        """
+        Extract the encoded open tracking URL path from the full URL.
+
+        This method extracts the portion of the URL that contains the encoded open tracking information
+        by removing the base open tracking URL from the full URL.
+
+        :param url: The full URL containing the encoded open tracking information.
+        :type url: str
+        :return: The encoded open tracking URL path.
         """
         return url[len(self.base_open_tracking_url):]
 
