@@ -57,7 +57,7 @@ def _replace_links(tree, extra_metadata, configuration):
     :param configuration: Configuration object containing settings
     """
     for (element, attribute, link, pos) in tree.iterlinks():
-        if element.tag == "a" and attribute == "href" and _valid_link(link):
+        if element.tag == "a" and attribute == "href" and _valid_link(link, configuration):
             new_link = get_click_tracking_url(
                 link, extra_metadata, configuration)
             element.attrib["href"] = new_link
@@ -82,7 +82,13 @@ def _add_tracking_pixel(tree, extra_metadata, configuration):
     else:
         tree.insert(0, pixel)
 
+_valid_scheme = ["http://", "https://", "//"]
 
-def _valid_link(link):
-    return link.startswith("http://") or link.startswith("https://") or\
-        link.startswith("//")
+def _valid_link(link, configuration=None):
+    """
+    Check if a link is valid for click tracking.
+    """
+    is_valid = any(link.startswith(scheme) for scheme in _valid_scheme)
+    if configuration and configuration.base_click_tracking_url:
+        is_valid = is_valid and not link.startswith(configuration.base_click_tracking_url)
+    return is_valid
