@@ -1,9 +1,9 @@
 import requests
 
-from pytracking.tracking import get_configuration
+from pytracking.tracking import get_configuration, TrackingResult, Configuration
 
 
-def send_webhook(tracking_result, configuration=None, **kwargs):
+def send_webhook(tracking_result: TrackingResult, configuration: Configuration=None, **kwargs):
     """Sends a POST request to the webhook URL specified in tracking_result.
 
     The POST request will have a body of type application/json that contains a
